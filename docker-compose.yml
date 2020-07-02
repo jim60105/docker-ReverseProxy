@@ -1,33 +1,26 @@
 version: '3.7'
 
-x-labels:
-  &default-label
-  labels:
-    - "proxy"
-x-volumes:
-  &default-volumes
-  volumes:
-    - certs:/etc/nginx/certs
-    - conf:/etc/nginx/conf.d
-    - vhost:/etc/nginx/vhost.d
-    - html:/usr/share/nginx/html
-    - dhparam:/etc/nginx/dhparam
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+x-labels: 
+  labels: &default-label
+    proxy:
 
 services:
   proxy:
     build: ./proxy
     container_name: proxy
-    << : *default-label
     labels:
-      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+      <<: *default-label
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy:
     restart: always
     ports:
       - 80:80
       - 443:443
-    << : *default-volumes
     volumes:
       - certs:/etc/nginx/certs:ro
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - dhparam:/etc/nginx/dhparam
       - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
       - proxy-tier
@@ -35,20 +28,31 @@ services:
   letsencrypt-companion:
     image: jrcs/letsencrypt-nginx-proxy-companion
     container_name: proxy_le
-    << : *default-label
+    labels: *default-label
     restart: always
-    << : *default-volumes
+    volumes: 
+      - certs:/etc/nginx/certs
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - dhparam:/etc/nginx/dhparam
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - proxy
     networks:
       - proxy-tier
 
 volumes:
-  conf: *default-label
-  dhparam: *default-label
-  certs: *default-label
-  vhost: *default-label
-  html: *default-label
+  conf:
+    labels: *default-label
+  dhparam:
+    labels: *default-label
+  certs:
+    labels: *default-label
+  vhost:
+    labels: *default-label
+  html:
+    labels: *default-label
 
 networks:
   proxy-tier:
