@@ -4,7 +4,6 @@ Template改自: [nginx-proxy/docker-letsencrypt-nginx-proxy-companion](https://g
 
 ### **對每個後端service**添加以下環境變數
 * VIRTUAL_HOST: 要往此service的網址
-* CERT_NAME: SSL證書網域，必須和LETSENCRYPT_HOST的第一個相同
 * LETSENCRYPT_HOST: SSL證書網域、別名
 * LETSENCRYPT_EMAIL: 申請人email，到期日近會有通知。請正確填寫，似乎不容易變更
 
