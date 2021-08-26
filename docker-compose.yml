@@ -5,53 +5,74 @@ x-labels:
     proxy:
 
 services:
-  proxy:
+  nginx-proxy:
     build: ./proxy
-    container_name: proxy
+    container_name: nginx-proxy
+    restart: always
     labels:
       <<: *default-label
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy:
-    restart: always
     ports:
       - 80:80
       - 443:443
     volumes:
-      - certs:/etc/nginx/certs:ro
       - conf:/etc/nginx/conf.d
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
-      - dhparam:/etc/nginx/dhparam
-      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs:ro
     networks:
       - proxy-tier
 
-  letsencrypt-companion:
-    image: jrcs/letsencrypt-nginx-proxy-companion
-    container_name: proxy_le
-    labels: *default-label
+  docker-gen:
+    image: nginxproxy/docker-gen
+    container_name: nginx-proxy-gen
+    depends_on:
+      - proxy
     restart: always
-    volumes: 
-      - certs:/etc/nginx/certs
+    labels:
+      <<: *default-label
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen:
+    volumes:
       - conf:/etc/nginx/conf.d
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
-      - dhparam:/etc/nginx/dhparam
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/etc/nginx/certs:ro
+      - ./nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    command: -notify-sighup nginx-proxy -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    networks:
+      - proxy-tier
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    restart: always
     depends_on:
       - proxy
+      - proxy-gen
+    labels: *default-label
+    env_file:
+      - .env
+    volumes: 
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - proxy-tier
 
 volumes:
   conf:
     labels: *default-label
-  dhparam:
-    labels: *default-label
-  certs:
-    labels: *default-label
   vhost:
     labels: *default-label
   html:
+    labels: *default-label
+  certs:
+    labels: *default-label
+  acme:
     labels: *default-label
 
 networks:
