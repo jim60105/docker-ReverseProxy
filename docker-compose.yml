@@ -27,7 +27,7 @@ services:
     image: nginxproxy/docker-gen
     container_name: nginx-proxy-gen
     depends_on:
-      - proxy
+      - nginx-proxy
     restart: always
     labels:
       <<: *default-label
@@ -48,8 +48,8 @@ services:
     container_name: nginx-proxy-acme
     restart: always
     depends_on:
-      - proxy
-      - proxy-gen
+      - nginx-proxy
+      - docker-gen
     labels: *default-label
     env_file:
       - .env
